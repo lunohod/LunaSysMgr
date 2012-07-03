@@ -111,7 +111,7 @@ class TabletKeymap : public Mapper_IF
 public:
 	enum {
 		cKeymapRows = 5,
-		cKeymapColumns = 12,
+		cKeymapColumns = 14,
 	};
 
 	enum EShiftMode
