@@ -49,6 +49,9 @@
 #include <QApplication>
 #include <qsocketnotifier.h>
 
+#include <QWSServer>
+#include <QKbdDriverFactory>
+
 #include "CustomEvents.h"
 #include "Time.h"
 #include "HostBase.h"
@@ -78,13 +81,13 @@ static int s_currentOrientation = ORIENTATION_UNKNOWN;
 //TODO: Move me to a header!
 extern "C" void setTransform(QTransform*);
 extern "C" InputControl* getTouchpanel(void);
-extern "C" void setBluetoothCallback(void (*fun)(bool));
+extern "C" void setBluetoothCallback(void (*fun)(bool, int));
 #endif
 
 #ifdef HAVE_QPA
-static void bluetoothCallback(bool enable)
+static void bluetoothCallback(bool enable, int device_id)
 {
-    HostBase::instance()->setBluetoothKeyboardActive(enable);
+    HostBase::instance()->setBluetoothKeyboardActive(enable, device_id);
 }
 #endif
 
@@ -802,8 +805,10 @@ InputControl* HostArm::getInputControlBluetoothInputDetect()
     return m_halInputControlBluetoothInputDetect;
 }
 
-void HostArm::setBluetoothKeyboardActive(bool active)
+void HostArm::setBluetoothKeyboardActive(bool active, int device_id)
 {
+    setBluetoothKeyboardLayout("us", active, device_id);
+
     if (m_bluetoothKeyboardActive != active) {
         m_bluetoothKeyboardActive = active;
         g_debug("Bluetooth keyboard is %s", active ? "active" : "inactive");
@@ -814,4 +819,56 @@ void HostArm::setBluetoothKeyboardActive(bool active)
 bool HostArm::bluetoothKeyboardActive() const
 {
     return m_bluetoothKeyboardActive;
+}
+
+void HostArm::setBluetoothKeyboardLayout(const char* lang, bool active, int p_device_id)
+{
+    static QWSKeyboardHandler *handler = NULL;
+    static int device_id = 0;
+
+    if (p_device_id > 0)
+        device_id = p_device_id;
+
+    if (handler) {
+        delete handler;
+        handler = NULL;
+    }
+
+    if (!active) {
+        device_id = 0;
+        return;
+    }
+
+    char idBuf[16];
+    snprintf(idBuf, sizeof(idBuf), "%d", device_id);
+    idBuf[sizeof(idBuf)-1] = '\0';
+
+    QString optionStr = "/dev/input/event";
+    optionStr += idBuf;
+    optionStr += ":keymap=/usr/share/qt4/keymaps/keymap-";
+
+    /*
+       bool	compose = false;
+
+    // Country codes come directly from the USB HID spec
+    // See NOV-93218
+    switch (m_curDeviceCountry) {
+    case 33: optionStr += "us"; break;
+    case 8: optionStr += "fr"; compose = true; break;
+    case 9: optionStr += "de"; compose = true; break;
+    case 32: optionStr += "uk"; compose = true; break;
+    default: optionStr += "us"; break;
+    }
+
+    if (compose)
+    optionStr += ":enable-compose";
+    */
+
+    optionStr += lang;
+    optionStr += ".qmap";
+
+    g_message("QWSHiddKbdHandlerPrivate: BT keyboard handler set to %s", optionStr.toUtf8().data());
+
+    handler = QKbdDriverFactory::create("LinuxInput", optionStr);
+    handler->setIsExternalKeyboard(true);
 }

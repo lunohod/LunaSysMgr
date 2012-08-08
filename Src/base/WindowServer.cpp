@@ -991,8 +991,15 @@ bool WindowServer::handleEvent(QEvent* event)
 					g_debug ("Dropping shift key if CapsLock is on, required to offset webkits shifting logic");
 					return true;
 				}
-				if (sShiftDown)
+				static bool l = false;
+				if (sShiftDown) {
+					if (l)
+						HostBase::instance()->setBluetoothKeyboardLayout("us");
+					else
+						HostBase::instance()->setBluetoothKeyboardLayout("ru");
+					l = !l;
 					return true;
+				}
 				sShiftDown = true;
 			}
 			else if (keyEvent->key() == Qt::Key_Alt) {
