@@ -120,8 +120,9 @@ public:
       */
     virtual void OrientationSensorOn(bool enable);
 
-    virtual void setBluetoothKeyboardActive(bool active);
+    virtual void setBluetoothKeyboardActive(bool active, int device_id);
     virtual bool bluetoothKeyboardActive() const;
+    virtual void setBluetoothKeyboardLayout(const char* lang, bool active = true, int p_device_id = 0);
 
 protected:
 

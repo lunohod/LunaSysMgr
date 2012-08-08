@@ -133,8 +133,9 @@ public:
 
 	virtual bool homeButtonWakesUpScreen() { return false; }
 
-    virtual void setBluetoothKeyboardActive(bool active) {}
+    virtual void setBluetoothKeyboardActive(bool active, int device_id) {}
     virtual bool bluetoothKeyboardActive() const { return false; }
+    virtual void setBluetoothKeyboardLayout(const char* lang, bool active = true, int p_device_id = 0) {}
 
 Q_SIGNALS:
     void signalBluetoothKeyboardActive(bool active);
